@@ -1,0 +1,74 @@
+### UPLOAD DES IMAGES SUR LE SITE ### Video grafikart(12:50): https://www.youtube.com/watch?v=OZBVd4ZTIqk
+
+installer VichUploaderBundle
+
+composer require vich/uploader-bundle
+
+Tout d'abord il faut renseigner un mapping dans conf/packages/vich_uploader.yaml pour indiquer où doit se positionner 
+l'image et comment on doit la nommer
+
+vich_uploader:
+    db_driver: orm
+
+    mappings:
+        property_image:
+            uri_prefix: /images/ads
+            upload_destination: "%kernel.project_dir%/public/images/ads"
+
+
+Ajouter l'annotation @Vich\Uploadable dans l'entité Ad
+
+Ajouter deux nouvelles variables private $imageFile et $filename et la documenter:
+
+ /**
+     *
+     * @var string|null
+     * @ORM\Column{type="string", length=255}
+     */
+    private $filename;
+
+    /**
+     * Correspond à l'imagé uploadé
+     *
+     * @var File|null
+     * @Vich\UploadableField(mapping="property_image", fileNameProperty="filename")
+     */
+    private $imageFile;
+
+    
+Ajouter les uses correspondants:
+use Vich\UploaderBundle\Mapping\Annotation as Vich;
+use Vich\UploaderBundle\Mapping\Annotation\UploadableField; 
+
+Ajouter les getter et les setter de ces deux variables (utiliser l'extension visual code)
+
+faire un php bin/console m:m et vérifier si la modif à bien été prise en compte dans le dernier fichier de migration
+faire un php bin/console d:m:m
+
+Ajouter le champ dans AdType.php:
+
+ ->add('imageFile', FileType::class,[
+                'required' => false
+            ])
+
+/!\ PROBLEME: l'image n'est pas uploadé dans la base de donnée
+
+Ajouter un nouveau champs updatedAt avec la cli
+
+Modifier le setter de imageFile:
+
+ public function setImageFile($imageFile)
+    {
+        $this->imageFile = $imageFile;
+      +  if ($this->imageFile instanceof UploadedFile) {
+      +     $this->updatedAt = new \DateTime('now');
+      + }
+
+        return $this;
+    }
+
+Ajouter une logique de nommage aux image avec Namer
+Dans le vich_uploader.yaml ajouter le namer:
+
+namer: Vich\UploaderBundle\Naming\UniqidNamer
+

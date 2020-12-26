@@ -1,0 +1,4 @@
+INSTALLATION SASS SUR LINUX:
+
+apt-get install node
+nmp install -g sass

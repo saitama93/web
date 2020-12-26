@@ -1,0 +1,4 @@
+### Centraliser la configuration dans un seul fichie ###
+
+Dans le dossier "js" créer un fichier "config.js"
+

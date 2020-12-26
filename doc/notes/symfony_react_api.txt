@@ -1,0 +1,468 @@
+### /!\ PROBLEME DE MEMOIRE COMPOSER ###
+
+faire free -m (pour voir si l'espace swap est activé)
+
+Pour l'activer faire :
+
+sudo /bin/dd if=/dev/zero of=/var/swap.1 bs=1M count=1024
+sudo /sbin/mkswap /var/swap.1
+sudo /sbin/swapon /var/swap.1
+
+### Extension VSC ###
+
+Pour le JSX: simple react snippets
+
+### REST ### 
+REpresentational State Transfert ( Transfert de représentation d'état)
+
+
+### APIPLATFORM ###
+
+composer req api
+
+https://api-platform.com/
+
+exemple d'annotation: @ApiFilter(SearchFilter::class, properties={"firstName":"partial", "lastName", "company"})
+
+Filtrer par rapport à des objets liés: Filtrering on Nested Properties
+
+### NORMALISATION & SERIALISATION ###
+
+Normalisation: c'est le fait de transformer un objet php complexe en un simple tableau classique
+Serialisation: c'est le fait de prendre le tableau classique (après normalisation) pour le rendre en un formation précis (Json, JsonLd, XML ...)
+
+La Désérialisation et la dénormalisation sont l'inverse de la sérialisation et la normalisation 
+
+### Context de normalisation ###
+
+Exemple d'utilisation 
+
+/**
+ * @ORM\Entity(repositoryClass="App\Repository\CustomerRepository")
+ * @ApiResource(
+ *  normalizationContext = {
+ *      "groups" = {"customers_read"}
+ * }
+ * )
+ * @ApiFilter(SearchFilter::class)
+ * @ApiFilter(OrderFilter::class)
+ */
+class Customer
+{
+    /**
+     * @ORM\Id()
+     * @ORM\GeneratedValue()
+     * @ORM\Column(type="integer")
+     * @Groups({"customers_read"})
+     */
+    private $id;
+
+Ce code nous permet pendant la normalisation d'extraire les données qui sont dans le group "customer_read" c'est-à-dire affiche que les id des Customers
+
+### ACTIVER / DESACTIVER LES ACTIONS DE L'API ###
+
+Exemple d'utilisation:
+
+
+/**
+ * @ORM\Entity(repositoryClass="App\Repository\CustomerRepository")
+ * @ApiResource(
+ *  collectionOperations = {"GET" = {"path" = "/clients"}},
+ *  itemOperations = {"GET" = {"path" = "/clients/{id}"}},
+ *  normalizationContext = {
+ *      "groups" = {"customers_read"}
+ * }
+ * )
+ * @ApiFilter(SearchFilter::class)
+ * @ApiFilter(OrderFilter::class)
+ */
+class Customer
+{
+
+
+### Concept de sous-ressource (SubResource) ###
+
+Exemple d'utilisation sur les invoices des customers
+
+ /**
+     * @ORM\OneToMany(targetEntity="App\Entity\Invoice", mappedBy="customer")
+     * @Groups({"customers_read"})
+     * @ApiSubresource
+     */
+    private $invoices;
+
+Ce qui va nous créer dans notre API lA route suivante: 
+- GET  http://localhost:8080/api/api/customers/{id}/invoices
+
+### CONFIGURER UNE SOUS-RESSOURCE ###
+
+Exemple d'utilisation
+/**
+ * @ORM\Entity(repositoryClass="App\Repository\CustomerRepository")
+ * @ApiResource(
+ *  collectionOperations = {"GET", "POST"},
+ *  itemOperations = {"GET", "DELETE", "PUT", "PATCH"},
+ *  subresourceOperations = {"invoices_get_subresource" = {"path" = "/clients/{id}/factures"}},
+ *  normalizationContext = {
+ *      "groups" = {"customers_read"}
+ * }
+ * )
+ * @ApiFilter(SearchFilter::class)
+ * @ApiFilter(OrderFilter::class)
+ */
+class Customer
+{
+
+### / ! \ CHAMPS DATE INVOICES / ! \ ###
+
+Allé dans vendor/symfony/Normalizer/DateTimeNormalizer.php
+
+copié collé tout le fichier puis créer un dossier Serializer dans src et créer un fichier "PatchedDateTimeNormalizer.php"
+Dans la methode denormalize de cette class changer cette partie du code 
+try {
+            return \DateTime::class === $type ? new \DateTime($data, $timezone) : new \DateTimeImmutable($data, $timezone);
+        } catch (\Exception $e) {
+
+            if($context['disable_type_enforcement'] ?? false){
+                return $data;
+            }
+            throw new NotNormalizableValueException($e->getMessage(), $e->getCode(), $e);
+        }
+
+Dans l'entité Invoices ajouter cette config
+denormalizationContext = {"disable_type_enforcement" = true}
+enlever le "type hint" 
+
+Après ça:
+
+Salut les gars,
+
+J'ai eu le même problème que vous.
+J'ai trouvé une solution qui n'est pas idéale mais qui fonctionne. J'ai fait comme Lior a dit sur toute la ligne sauf que j'ai remplacé @Assert\DateTime par :
+
+* @Assert\Type(
+* type = "\DateTime",
+* message = "La date renseignée doit être au format YYYY-MM-DD !"
+* )
+
+Avec ça tout fonctionne. Par contre, ce n'est pas idéal car utiliser type="\DateTime" est déprécié. Le "type hint" du setter de $sentAt se suffit à lui même depuis Symfony 4.2 normalement ;-)
+
+
+### JWT ###
+
+Installer le bundle: LexikJWTAuthenticationBundle
+
+composer require "lexik/jwt-authentication-bundle"
+
+faite un "openssl" dans votre commande si vous n'avez pas de message d'erreur tout est bon sinon allé installer openssl manuellement
+Dans le dossier config créer un dossier jwt avec la commande: mkdir -p config/jwt
+
+Générer une clé privé
+openssl genpkey -out config/jwt/private.pem -aes256 -algorithm rsa -pkeyopt rsa_keygen_bits:4096
+à la fin de la commande on me demande le PEM pass phrase ce pass phrase a été générer deans le .env après l'installation du bundle JWT
+
+Générer une clé public à partir de la clé privé
+openssl pkey -in config/jwt/private.pem -out config/jwt/public.pem -pubout
+renseingner le pass phrase 
+
+Vérifier si on a bien deux fichier (private.pem et public.pem) avec les clés privé et public dans le dossier config/jwt
+
+Créer un nouveau firewall dans security.yaml
+
+login:
+    pattern:  ^/api/login
+    stateless: true
+    anonymous: true
+        json_login:
+            check_path:               /api/login_check
+            success_handler:          lexik_jwt_authentication.handler.authentication_success
+            failure_handler:          lexik_jwt_authentication.handler.authentication_failure
+api:
+            pattern:   ^/api
+            stateless: true
+            guard:
+                authenticators:
+                    - lexik_jwt_authentication.jwt_token_authenticator
+
+La route /api/login_check marche pas car il faut la configurer dans le config/route.yaml
+
+api_login_check:
+    path: /api/login_check
+
+
+### ENEVNT DU KERNEL ###
+
+Intervenir sur la création d'un User pour hasher le mot de passe
+
+créer un dossier "Events" dans le dossier "src"
+
+Dans "EVENTS" créer un fichier "PasswordEncoderSubsciber.php" qui implémente l'interface EventSubscriberInterface
+
+dans cette class créer la fonction  public static function getSubscribedEvents() (qui se trouve dans l'interface EventSubscriberInterface)
+cette fonction va retoruner un tableau de clé qui va lui permettre se s'accrocher à un événement
+
+public static function getSubscribedEvents()
+    {
+        return [
+            KernelEvents::VIEW => ['encodePassword', EventPriorities::PRE_WRITE]
+        ];
+    }
+
+KernelEvents::VIEW // l'événement dans lequel on veut intervenir ps: VIEW est une constante de KernelEvents
+encodePassword: nom de la fonction que l'on veut appeler
+EventPriorities: Moment précis où l'on veut intervenir (ici c'est avant l'écriture dans la base de données)
+
+ public function encodePassword(ViewEvent $event){
+
+        $result = $event->getControllerResult();
+        $method = $event->getRequest()->getMethod(); // GET, POST, PUT ...
+
+        // Si le result est une instace de User et que la method est POST
+        if($result instanceof User && $method === 'POST'){
+            
+            $hash = $this->encoder->encodePassword($result, $result->getPassword());
+            $result->setPassword($hash); 
+        }
+    }
+
+### JWT CUSTOMISATION ###
+
+Data customization and validation: https://github.com/lexik/LexikJWTAuthenticationBundle/blob/master/Resources/doc/2-data-customization.md
+
+Dans le dossier "Event" créer un fichier JWTCreatedSubsciber.php 
+<?php
+
+namespace App\Events;
+
+use Lexik\Bundle\JWTAuthenticationBundle\Event\JWTCreatedEvent;
+
+class JWTCreatedSubscriber
+{
+
+    public function updateJwtData(JWTCreatedEvent $event)
+    {
+
+        // Récupérer l'utilisateur pour avoir son prénom (firstName) et son nom (lastName)
+        $user = $event->getUser();
+
+        // Enrichir les data pour quelles conteinnent ces données
+        $data = $event->getData();
+        $data['firsName'] = $user->getFirstName();
+        $data['lastName'] = $user->getLastName();
+        
+        $event->setData($data);
+    }
+}
+
+Pour que cette class soit appelé à la création d'un token lors de l'authentification
+configurer le security.yaml en y ajoutant un nouveau service
+
+services:
+    ...
+
+    App\Events\JWTCreatedSubscriber:
+        tags:
+            -   {
+                    name: kernel.event_listener,
+                    event: lexik_jwt_authentication.on_jwt_created,
+                    method: updateJwtData,
+                }
+    
+### EXTENSION DOCTRINE ###
+
+Extensions de Doctrine : modifier les requêtes DQL d'ApiPlatform
+
+Dans le dosier src créer un dossier Doctrine et dans celui-ci créer un fichier CurentUserExtension.php
+
+<?php
+
+namespace App\Doctrine;
+
+use Doctrine\ORM\QueryBuilder;
+use ApiPlatform\Core\Bridge\Doctrine\Orm\Util\QueryNameGeneratorInterface;
+use ApiPlatform\Core\Bridge\Doctrine\Orm\Extension\QueryItemExtensionInterface;
+use ApiPlatform\Core\Bridge\Doctrine\Orm\Extension\QueryCollectionExtensionInterface;
+use App\Entity\Customer;
+use App\Entity\Invoice;
+use App\Entity\User;
+use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
+use Symfony\Component\Security\Core\Security;
+
+class CurentUserExtension implements QueryCollectionExtensionInterface, QueryItemExtensionInterface
+{
+
+    /**
+     * @var Security
+     */
+    private $security;
+
+    /**
+     * @var AuthorizationCheckerInterface
+     */
+    private $auth;
+
+    public function __construct(Security $security, AuthorizationCheckerInterface $checker)
+    {
+        $this->security = $security;
+        $this->auth = $checker;
+    }
+
+    private function addWhere(QueryBuilder $queryBuilder, string $resourceClass)
+    {
+
+        // Obtenir l'utilisateur connecté
+        $user = $this->security->getUser();
+
+        // Si on demande des factures (invoices) ou des clients (custormers)
+        // alors agir sur la requette pour qu'elle tienne compte de l'utilisateur connecté
+        if (
+            ($resourceClass == Customer::class || $resourceClass == Invoice::class)
+            && !$this->auth->isGranted('ROLE_ADMIN')
+            && $user instanceof User
+        ) {
+            // Récupérer l'alias de la query 'o' ici
+            $rootAlias = $queryBuilder->getRootAliases()[0];
+
+            if ($resourceClass === Customer::class) {
+                $queryBuilder->andWhere("$rootAlias.user = :user");
+            } elseif ($resourceClass === Invoice::class) {
+                $queryBuilder->join("$rootAlias.customer", "c")
+                    ->andWhere("c.user = :user");
+            }
+
+            $queryBuilder->setParameter("user", $user);
+        }
+    }
+
+    public function applyToCollection(
+        QueryBuilder $queryBuilder,
+        QueryNameGeneratorInterface $queryNameGenerator,
+        string $resourceClass,
+        ?string $operationName = null
+    ) {
+        $this->addWhere($queryBuilder, $resourceClass);
+    }
+
+    public function applyToItem(
+        QueryBuilder $queryBuilder,
+        QueryNameGeneratorInterface $queryNameGenerator,
+        string $resourceClass,
+        array $identifiers,
+        ?string $operationName = null,
+        array $context = []
+    ) {
+        $this->addWhere($queryBuilder, $resourceClass);
+    }
+}
+
+
+
+
+
+############################################  REACT  ##############################################################
+
+Installer webpack et le yarn install "--no-bin-link" (si sous machine vagrant)
+
+$ composer require symfony/webpack-encore-bundle
+$ yarn install --no-bin-links
+
+Dans le webpack.config.js décommenter la ligne ".enableReactPreset();"
+lancer un : yarn add @babel/preset-react@^7.0.0 --dev --no-bin-links
+installer les dépendances de react:
+yarn add react@16.8.6 react-dom@16.8.6 react-router-dom@5.0.0 axios@0.18.0 --no-bin-links 
+(ces version sont spécifique à la formation de lior)
+
+Bien vérifier que tout fonction avec un: yarn run dev 
+
+Dans le app.jss tout en haut ajouter:
+// Les imports importants
+import React from "react";
+
+Créer un composant react à la fin du fichier app.js:
+
+const App = () => {
+    return <h1> Bonjour à tous! </h1>;
+};
+
+/ ! \ : Si prblèment de format après enregistrement remplacer tout les fichier .js par .jsx
+
+Pour afficher notre composant mettre à la fin du app.jsx (ancien app.js): 
+const rootElement = document.querySelector("#app");
+
+ReactDOM.render(<App />, rootElement);
+
+Normalement le "Bonjour à tous !" s'affiche sur la page d'accueil
+
+GG ! :)
+
+### BOOTSWATCH ###
+https://bootswatch.com/solar/
+
+Dans le dossier src/assets/js créer 3 dossiers:
+- services // pour les différentes fonctionnalités
+- pages // pour les différentes pages
+- components // pour les différents composants
+
+
+### ROUTAGE ###
+
+Dans le fichier app.jsx ajouter la ligne suivante:
+import { HashRouter, Switch, Route } from "react-router-dom";
+
+
+### ENVOYER DES REQUETTES HTTP DEPUIS REACT ### Exemple sur les Customer (Customer.jsx)
+
+Hook "useEffect()": permet de mettre en place un "side effect" à un moment données
+
+Tout en haut du fichier Customer.jsx ajouter:
+import React, {useEffect, useState} from "react";
+import axios from "axios";
+
+
+### FORMATAGE DES DATES ###
+
+installer la librairie moment
+yarn add moment --no-bin-links
+
+### GESTIONS DES IMPORTS ###
+
+CTRL + SHIFT + P : organisation des import
+
+
+### FORMULAIRE DE CONNEXION (LOGIN) ###
+
+Créer une page LoginPage.jsx
+
+
+### Instalation de jwt-decode ###
+
+yarn add jwt-decode --no-bin-links : permet de décoder un JWT pour obtenir les données qu'il contient
+
+
+### LES PROPS DU DOM-ROOTER ###
+
+history: Permet de déclancher la navigation de façon programmatique
+exemple:
+
+const LoginPage = ({onLogin, history}) => ...
+
+/ ! \ history marche que sur les composant qui sans dans un rooter (problème du bouton de déconnexion)
+Pour résoudre le problème dans le react-dom-rooter importer aussi la fonction withRooter
+
+withRooter: Retourne le composant qu'on lui donne en lui donnant  les props du routeur !
+
+
+### RDIRECTION ###
+L'importer dans le react-router-dom
+Le composant redirect permet de rediriger le routeur sur une autre route
+
+
+### LES FORMULAIRES AVEC REACT ###
+
+Dans le dossiers components créer un sous dossier forms et dans ce dernier créer un fichier Field.jsx
+Ce fichier va nous permettre de générer des champs de formulaire avec les class de bootstrap
+
+Dans le dossier js/pages/ créer un dossier CustomerPage dans lequel on va mettre le formulaire de création/modification 
+d'un customer
+
+Créer la route qui y correspond dans le app.jsx

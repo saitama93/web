@@ -1,0 +1,15 @@
+BASE DE DONNEES RELATIONNELLES SYMFO:
+
+Créer une entitée
+
+php bin/console make:entity
+
+On a le choix entre créer ou modifier taper le nom de l'entitée à modifier
+Répondre aux questions suivant nos besoins
+
+
+INSTALLER LA FUNCTION VAR_DUMP:
+
+
+composer require --dev symfony/var-dumper
+composer require --dev symfony/debug-bundle

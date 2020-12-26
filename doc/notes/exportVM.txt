@@ -1,0 +1,25 @@
+Exportation VM:
+
+vagrant package --output nomdetabox.box
+"nomdetabox.box" peut-être n'importe quel nom
+
+/!\ ATTENTION
+
+Une fois l'exportation finit créer un nouveau dossier et coller le fichier.box que l'exportation à crée + un app (VIDE)
++ le vagrantFile
+
+IMPORTATION VM:
+
+vagrant box add nomdetaconfigvmhost nomdetabox.box
+exemple : vagrant box add dashboard symfony.box
+
+le "nomdetaconfigvmhost" est un nom que tu donne à ta VM dans le vagrantFile à la place du "Ubuntu/bionic64" après exportation
+
+PPROBLEME DE CHEMIN
+
+- Allumer Virtual Box et aller sur la VM en question
+- Supprimer les script dans le VagrantFile
+- Ligne 14 remplacer le unbuntu/bionic ... par le nom de fichier.box
+- Supprimer la ligne 15
+- Faire un vagrant box add dashboard fichier.box
+

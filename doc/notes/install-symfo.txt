@@ -1,0 +1,43 @@
+  yarn -v
+    2  composer -v
+    3  composer -V
+    4  php -v
+    5  composer create-project symfony/skeleton ./
+    6  cd /var/www/html
+    7  composer create-project symfony/skeleton ./
+    8  git init
+    9  git add .
+   10  git commit -am "Start project"
+   11  git config --global user.email "igalilmi32@gmail.com"
+   12  git config --global user.name "saitama93"
+   13  git commit -am "Start project"
+   14  sudo nano /etc/apache2/sites-enabled/000-default.conf
+   15  sudo service apache2 restart
+   16  composer require annotations
+   17  composer require symfony/apache-pack
+   18  composer require symfony/maker-bundle --dev
+   19  php bin/console make:controller DashboardController
+   20  composer require twig
+   21  php bin/console make:controller introTwig
+   22  composer require symfony/webpack-encore-bundle
+   23  yarn install --no-bin-links
+   24  yarn run dev
+   25  composer require symfony/apache-pack
+   26  composer require symfony/apache-pack -a
+   27  apache service restart
+   28  apache2 service restart
+   29  service apache restart
+   30  php bin/console cache:clear --env=dev --no-debug
+   31  git status
+   32  git add .
+   33  git status
+   34  git remote add origin https://github.com/saitama93/portfolio.git
+   35  git push -u origin master
+   36  exit
+   37  cd /var/www/html
+   38  yarn run dev
+   39  yarn add sass-loader@^7.0.1 node-sass --dev --no-bin-links
+   40  yarn run dev
+   41  yarn run watch
+   42  history
+   43  yarn run watch

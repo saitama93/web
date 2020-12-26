@@ -1,0 +1,66 @@
+ 
+Créer un nouveaux service "cache.jsx" dans le dossier "services
+
+### CREATION DE L'OBJET CACHE ###
+
+const cache = {};
+
+function set(key, data) {
+  cache[key] = {
+    data, // <=> data:data
+    cachedAt: new Date().getTime()
+  };
+}
+
+function get(key) {
+  return new Promise(resolve => {
+    resolve(
+      cache[key] && cache[key].cachedAt + 15 * 60 * 1000 > new Date().getTime()
+        ? cache[key].data
+        : null
+    );
+    // <=> if(cache && && cache[key].cachedAt + 15 * 60 * 1000 (15 min) > new Date().getTime()){return cache[key].data}else{return null}
+  });
+}
+
+export default {
+  set,
+  get
+};
+
+
+### EXEMPLE D'UTILISATION ###
+
+Dans "customersAPI.jsx"
+
+async function findAll() {
+  const cachedCustomers = await Cache.get("customers");
+
+  if (cachedCustomers) return cachedCustomers;
+  return axios.get("http://localhost:8080/api/customers").then(response => {
+    const customers = response.data["hydra:member"];
+    Cache.set("customers", customers);
+    return customers;
+  });
+}
+
+
+
+
+function update(id, customer) {
+  return axios
+    .put("http://localhost:8080/api/customers/" + id, customer)
+    .then(async response => {
+      const cachedCustomers = await Cache.get("customers");
+
+      if (cachedCustomers) {
+        const index = cachedCustomers.findIndex(c => c.id === +id);
+        const newCachedCustomer = response.data;
+
+        cachedCustomers[index] = newCachedCustomer;
+        Cache.set("customers", cachedCustomers);
+      }
+
+      return response;
+    });
+}

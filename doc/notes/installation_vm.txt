@@ -1,0 +1,70 @@
+Installation de VM:
+
+- créer un dossier "app" dans un dossier principal
+- ouvrir un terminal sur visual code
+- ouvrir le dossier 'principal'
+- faire un "vagrant init"
+- ouvrir le fichier "vagrant init"
+- ligne 15:remplacer "base" par  "ubuntu/bionic64"
+- ligne 40: la décommenter après "public network" écrire ", type: "dhcp" //pour le responsive généralement
+- ligne 46: remplacer "/vagrant_data" par "/var/www/html" et la décommenter et "../data" par "app"
+
+
+Automatiser sa VM:
+
+A la fin du fichier vrangrantfile écrire la comande suivante: "config.vm.provision "shell", path: "script/apache2.sh"
+
+- dans le dossier 'principal' créer un dossier "script" et créer un fichier "apache2.sh"
+- dans le fichier "apache2.sh" écrire les commandes suivantes: 
+
+#mise à jour
+
+apt-get update
+apt-get upgrade -y
+
+#Installation d'apache
+
+apt-get -y install apache2
+
+#droit du dossier html
+
+chgrp www-data /var/www/html
+adduser vagrant www-data
+chmod -R g+rw /var/www/html
+
+A la suite de "config.vm.provision "shell", path: "script/apache2.sh" écrire "config.vm.provision "shell", path: "script/php72.sh" et créer un fichier "php72.sh"
+
+- dans le fichier "php72.sh" écrire les commandes suivantes: 
+
+#mise à jour
+
+apt-get update
+apt-get upgrade -y
+
+#installation de php
+
+apt-get -y install php
+apt-get -y install libapache2-mod-php
+apt-get -y install php-cli
+apt-get -y install php-mysql
+apt-get -y install php-gd
+apt-get -y install php-imagick
+apt-get -y install php-recode
+apt-get -y install php-tidy
+apt-get -y install php-xmlrpc
+apt-get -y install php-zip
+apt-get -y install php-mbstring
+
+renter dans la machin avec un vagrant ssh et faire les commandes suivantes:
+
+- ifconfig
+- si l'adress ip n'apparait pas faire un vagrant reload
+- installer ssmtp
+- editer le fichier ssmtp avec nano: sudo nano /etc/ssmtp/ssmtp.config
+- modifier le mdp, l'adresse mail ect ..
+- enregister et fermer
+- ouvrir avec nano le fichier php.init dans le repertoir "/etc/pph/7.2"
+- faire une recherche avec ctrl+w et chercher "sendmail" et à là ligne "sendmail_path" écrire "/usr/sbin/sendmail -t"
+
+
+

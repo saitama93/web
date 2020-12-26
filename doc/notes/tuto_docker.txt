@@ -1,0 +1,34 @@
+### COMMANDES BASIC ###
+
+$ docker ps : permet de lister la liste des images actives
+
+$ docker diff DebutDeNomDeImage : permet d'afficher la différence entre l'image par default et celle sur laquelle on a bossé
+ex: docker diff b32 
+
+$ docker images : affiche les détails de nos images
+
+$ docker commit nomImageParDefault nomDeNotreImageCommit permet de commit un conteneur 
+
+$ docker run -di --name nomConteneur ubuntu : permet de donner un name au conteneur 
+
+$ docker stop --name : permet d'arrêter un conteneur
+ex: docker stop web
+
+### PULL UNE IMAGE ###
+
+docker run -ti nomDeLImage
+
+### EXPORTATION ###
+
+1ere méthode: 
+
+docker save NomDeImage > chemin/vers/dossier/local/nomFichier.tar
+
+exemple: 
+
+docker save ubuntu > ~/web/docker
+
+/ ! \ Faire des recherches approndie sur le DockerFile (solution pour exportation mais plus rapide)
+
+2eme méthode:
+

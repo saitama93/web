@@ -1,0 +1,25 @@
+### MODIFICATION DU DERNIER COMMIT ###
+
+Conditions: le commit ne doit pas être push sur la master
+
+$ git add
+$ git commit -m "Message" --amend
+
+
+### VOIR LE CONTENU D'UN FICHIER ###
+
+$ git blame nomDuFichier.extension
+ex: git blae index.html
+
+
+### ENELEVER LES FICHIERS INUTILES ###
+
+$ git clean -n: montre les fichiers qui vont être supprimé
+
+$ git clean -dn: montre les fichiers ET les dossiers qui vont être supprimé
+
+$ git clean -df: supprime réelement les fichiers/dossiers
+
+$ git clean -xf: supprime  les fichiers/dossiers présents dans le .gitignore
+
+

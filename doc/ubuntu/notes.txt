@@ -1,0 +1,22 @@
+### Commande Linux ### 
+
+Appache2:
+
+- Démarrer appache
+$ sudo systemctl start apache2.service
+
+- Arrêter appache
+$ sudo systemctl stop apache2.service
+
+- Voir status
+$ sudo ufw status 
+
+- Gestion des group/utilisateurs
+
+~ https://doc.ubuntu-fr.org/tutoriel/gestion_utilisateurs_et_groupes_en_ligne_de_commande
+
+- Changement de permission
+$ chmod 775 fichier.txt
+
+- Se réaproprier les droits sur l'ensemble d'un dossier et que vous êtes l'utilisateur "igal"
+$ sudo chown -R igal /chemin/vers/dossier

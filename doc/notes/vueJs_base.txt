@@ -1,0 +1,9 @@
+### Attribut VueJs ###
+
+v:on:click: permet de faire appel à une fonction
+<button v-on:click="reverseTitle">Inverser</button>
+
+v-html: permet de prendre en compte les balise html
+Inclusion de balises html avec VueJs
+
+v-model: Permet de lier la valeur du champ à une variable 

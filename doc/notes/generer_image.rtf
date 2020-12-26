@@ -1,0 +1,71 @@
+{\rtf1\ansi\ansicpg1252\cocoartf1671\cocoasubrtf600
+{\fonttbl\f0\fswiss\fcharset0 Helvetica;\f1\froman\fcharset0 Times-Roman;\f2\fnil\fcharset0 Menlo-Regular;
+}
+{\colortbl;\red255\green255\blue255;\red0\green0\blue0;\red140\green211\blue254;\red23\green23\blue23;
+\red202\green202\blue202;\red212\green214\blue154;\red167\green197\blue152;\red194\green126\blue101;}
+{\*\expandedcolortbl;;\cssrgb\c0\c0\c0;\cssrgb\c61176\c86275\c99608;\cssrgb\c11765\c11765\c11765;
+\cssrgb\c83137\c83137\c83137;\cssrgb\c86275\c86275\c66667;\cssrgb\c70980\c80784\c65882;\cssrgb\c80784\c56863\c47059;}
+\paperw11900\paperh16840\margl1440\margr1440\vieww10800\viewh8400\viewkind0
+\pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 G\'e9n\'e9ration images : r\'e9aliser en 45 min apr\'e8s quelque difficult\'e9s \
+\
+Probl\'e8me rencontr\'e9 : durant le projet symbnb la g\'e9n\'e9ration d\'92image via le faker mettant trop de temps, le site lorempixel gal\'e8re \'e0 charger les images. \
+\
+\
+Solution : changer de site, apr\'e8s une recherche picsum.com s\'92av\'e8re \'eatre un bon site. \
+\
+Pour changer les images il faut r\'e9aliser plusieurs \'e9tapes :\
+\
+I) changer le code dans appFixtures ou l\'92on se r\'e9f\'e8re au faker\
+Dans cette situation il faut changer deux fois le code au moment ou l\'92on traite l\'92entity Ad et Image \
+\
+En prenant l\'92exemple avec Ad il faut r\'e9aliser la modification suivante : \
+ \
+=> changer la propri\'e9t\'e9 \
+\
+\pard\pardeftab720\sl280\partightenfactor0
+\cf0 Ancien code 
+\f1 \cf2 \expnd0\expndtw0\kerning0
+ \
+\pard\pardeftab720\sl360\partightenfactor0
+
+\f2 \cf3 \cb4 $coverImage\cf5  = \cf3 $faker\cf5 ->\cf6 imageUrl\cf5 (\cf7 350\cf5 , \cf7 100\cf5 );\cb1 \
+\pard\pardeftab720\sl280\partightenfactor0
+
+\f0 \cf0 \kerning1\expnd0\expndtw0 \
+\
+Nouveau code \
+\pard\pardeftab720\sl360\partightenfactor0
+
+\f2 \cf5 \cb4 \expnd0\expndtw0\kerning0
+   \cf3 $coverImageId\cf5  = \cf3 $faker\cf5 ->\cf6 numberBetween\cf5 (\cf7 1\cf5 , \cf7 85\cf5 ); \cb1 \
+\cb4    \cf3 $coverImage\cf5  = \cf8 "https://i.picsum.photos/id/"\cf5 . \cf3 $coverImageId\cf5  . \cf8 "/200/200.jpg"\cf5 ;\cb1 \
+\
+\pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural\partightenfactor0
+
+\f0 \cf0 \kerning1\expnd0\expndtw0 Pour cette exemple on remarque une nouvelle propri\'e9t\'e9 $coverImageId, celle-ci, gr\'e2ce \'e0 faker permet de charger un chiffre al\'e9atoire entre 1 et 85, qui correspond \'e0 l\'92id de l\'92image qui sera charg\'e9 par le site picsum. 
+\f2 \cf5 \expnd0\expndtw0\kerning0
+\
+
+\f0 \cf0 \kerning1\expnd0\expndtw0 \
+II) charger la fixture \
+\
+php bin/console doctrine:fixtures:load
+\f2 \cf5 \expnd0\expndtw0\kerning0
+\
+\pard\pardeftab720\sl280\partightenfactor0
+\cf5 \
+\
+\pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural\partightenfactor0
+
+\f0 \cf0 \kerning1\expnd0\expndtw0 \
+Piste d\'92am\'e9lioration : charger des images en rapport avec l\'92univers soit l\'92immobilier 
+\f2 \cf5 \expnd0\expndtw0\kerning0
+\
+\pard\pardeftab720\sl280\partightenfactor0
+\cf5 \
+\
+\pard\pardeftab720\sl360\partightenfactor0
+\cf5 \
+}

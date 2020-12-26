@@ -1,0 +1,1461 @@
+Symfony 4 : 
+
+propose des composants / solutions pour d�velopper plus vite 
+
+similaire laravel 
+
+Tutoriels 
+https://symfonycasts.com/
+https://www.grafikart.fr/formations/symfony-4-pratique
+https://symfony.com/doc/current/index.html#gsc.tab=0
+
+dans machine terminal 
+cd /var/www/html 
+
+composer create-project symfony/skeleton ./
+
+/!\ dossier app doit etre vite 
+
+var => cache symfony / de temps en temps il faut le vider a la mano
+
+-------------------------------
+git init 
+git add . 
+git commit -am 'Start project'
+
+git config --global user.email "parmentelot.bryan@hotmail.fr"
+git config --global user.name "parmentlovski"
+git commit -am 'Start project'
+
+-----------------------------
+
+si localhost => route mauvaise 
+configurer apache pour qu'il puisse pointer sur public
+sudo nano /etc/apache2/sites-enabled/000-default.conf
+dans fichier ctrl+w 'documentroot' et rajouter public
+DocumentRoot /var/www/html/public
+
+sudo service apache2 restart
+
+-----------------------------------------------------------------------------------------------------------
+/!\ si probleme apache 
+https://www.randomhacks.co.uk/how-completely-reconfigure-apache2-configuration-files/
+
+ajouter 
+installsynfo.sh 
+#Vider le dossier html
+sudo rm -rf /var/www/html/*
+
+#Cr�ation du projet
+composer create-project symfony/skeleton /var/www/html/
+
+#Chagement du document root
+sudo sed -i 's/DocumentRoot \/var\/www\/html/DocumentRoot \/var\/www\/html\/public/' /etc/apache2/sites-enabled/000-default.conf
+
+#red�marrage
+sudo service apache2 restart 
+
+#config.vm.provision "shell", path: "script/installsynfo.sh",priviliged: false
+----------
+
+sudo apt update
+sudo apt upgrade
+
+--------------------------------------------------------------------------------------------------------------
+
+pour le moment mvc ne marche pas car il n'y a pas de routage 
+doc de symfony route
+https://symfony.com/doc/current/routing.html
+
+par d�fault dans symfony les routes s'installer dans dossier config => route.yarl
+similaire a index.php dans le dossier alto
+
+---------------------------------------------
+
+cd /var/www/html composer require annotations
+
+dans dossier controler cr�er 1er controller : DefaultController.php
+
+https://symfony.com/doc/current/controller.html => a simple controller
+
+<?php 
+
+namespace App\Controller;
+
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Routing\Annotation\Route;
+
+class DefaultController
+{
+    /**
+     * @Route("/", name="index")
+     */
+    public function index()
+    {
+        return new Response(
+            '<html><body>Page index </body></html>'
+        );
+    }
+
+    /**
+     * @Route("/about", name="a-propos")
+     */
+
+    public function about() 
+    {
+        return new Response(
+            '<html><body>Page about </body></html>'
+        ); 
+    }
+}
+
+--------------------------------
+la route ne fonctionne pas car il n'y a pas de htaccess
+
+https://symfony.com/doc/current/setup/web_server_configuration.html
+
+composer require symfony/apache-pack
+-a 
+
+------------------------------------
+https://symfony.com/doc/current/controller.html
+si nouveau controller DashboardController.php plus besoin de le cr�er, symfony le g�n�re lui meme grace � symfony maker
+
+https://symfony.com/doc/current/bundles/SymfonyMakerBundle/index.html
+ composer require symfony/maker-bundle --dev
+
+php bin/console make:controller DashboardController
+
+dans la page cr�e rajouter 
+/**
+ * @Route("/dashboard/config", name="dashboard_config")
+*/
+    public function config()
+    {
+        return $this->json([
+            'message' => 'Welcome to your new controller!',
+            'path' => 'src/Controller/DashboardController.php',
+        ]);
+    }
+/**
+* @Route("/dashboard/security", name="dashboard_security")
+*/
+    public function security()
+    {
+        return $this->json([
+            'message' => 'Welcome to your new controller!',
+            'path' => 'src/Controller/DashboardController.php',
+        ]);
+    }
+
+et en amont de la classe on rajoute 
+/**
+* @Route("/dashboard")
+*/
+
+puis on supprime les dashboard/ des routes lignes 14 / 25 / 36
+exemple index :
+/**
+     * @Route("/", name="dashboard")
+     */
+exemple config: 
+/**
+     * @Route("/config", name="dashboard_config")
+     */ 
+
+---------------------------------------
+
+rajout d'une route 
+
+/**
+     * @Route("/profile/{id}", name="dashboard_profile")
+     */
+    public function profile($id)
+    {
+        return $this->json([
+            'message' => 'Welcome to your new controller!',
+            'path' => 'src/Controller/DashboardController.php',
+            'idProfile' => $id,
+        ]);
+    }
+
+---------------------------------------
+
+twig 
+https://symfony.com/doc/current/templating.html
+
+cd /var/www/html composer require twig 
+=> cela cr�e dossier template => base.html.twig
+
+ajout de fonctionnalit� a twig 
+
+
+cd /var/www/html php bin/console make:controller introTwig
+
+cela cr�ee une page introTwigController.php
+
+au dessus de public function index 
+
+    /**
+     * @Route("/blog", name="blog_index")
+     */
+
+
+en dessous de public function index 
+
+/**
+     * @Route("/blog/add", name="blog_add")
+     */
+
+public function add(){}
+
+cr�er une variable session ligne 11
+/**
+* @var SessionInterface 
+*/
+private $session;
+
+ctrl alt i sur SessionInterface cr�e => use Symfony\Bundle\FrameworkBundle\Controller\AbstractController; 
+
+en dessous de private $session
+ public function __construct(\SessionInterface $session)
+    {
+        $this->session = $session;
+    }
+
+----------------------
+
+remplir la public function add
+
+public function add() {
+        $posts = $this->session->get('posts');
+        $posts[uniqid()] = [
+            'title' => 'Un titre al�atoire'. rand(1,500), 
+            'text' => 'Un texte al�atoire'. rand(1,500)
+        ];
+
+	$this->session->set('posts', $posts );
+ 	return new RedirectResponse();
+    }
+
+ligne 18 rajouter 
+
+    /**
+     * @var RouterInterface
+     */
++ ctrl alt i
++  private $router; a la suite
+
+modifier la public function __construct => cette function permet d'instancier les objets � cet endroit
+
+   public function __construct(\SessionInterface $session, RouterInterface $router) // supprimer l'antislash devant Session interface
+    {
+        $this->session = $session;
+        $this->router= $router;
+    }
+
+� la ligne 50 / return new RedirectReponse => cette function correspond � header((Location))
+ce qui donne 
+return new RedirectResponse( $this->router->generate('blog_index'));
+
+-------------------------------
+
+modifier la function index ligne 34 
+
+ public function index()
+    {
+        return $this->render('blog/index.html.twig', [
+            'posts' => $this->session->get('posts'),
+        ]);
+    }
+
+-----------------------------------
+Dans dossier template renommer le dossier introTwig par blog
+
+et supprimer tout le contenu de index.html.twig
+puis ajouter :
+
+<div>
+    <a href="{{ path('blog_add') }}"> Ajouter</a> 
+</div>
+<div>
+    {% for post in posts %}
+        <div>
+            <h2>{{post.title}}</h2>
+            <p>{{post.text}}</p>
+        </div>
+    {% endfor %}}
+</div>
+
+---------------------------------------
+nouveau controller avec une nouvelle route quand on cliquera sur un post on vera les d�tails
+
+IntroTwigController
+
+/**
+     * @Route("/blog/show/{id}" , name="blog_show")
+     */
+    public function show($id)
+    {
+        $posts = $this->session->get('posts'); // on r�cup�re la variable de session post
+
+        if( !$posts || !isset($posts[$id])){ // si elle nous retourne que la variable n'existe pas ou que l'id du post n'existe pas 
+            throw new NotFoundHttpException('Post non trouv�'); // met le use de la classe qui g�re les exceptions // quand on g�n�re des exceptions le programme s'arrete
+        }
+
+        return $this->render( // si elle existe on retourne les infos du posts
+            'blog/post.html.twig',
+            [
+                'id' => $id,
+                'post' => $posts[$id]
+            ]
+            );
+    }
+}
+
+----------------------------------------
+dans blog => index.html.twig 
+
+ligne 8 avant le h2
+            <p><a href="{{ path('blog_show', { 'id': id })}}">Voir le post</a></p>
+
+-------------------------------------
+cr�ation du post 
+
+nouveau fichier dans blog => post.html.twig
+
+<p>ID : {{ id }}</p>
+<h2>{{ post.title }}</h2>
+<p>{{ post.text }}</p>
+
+<p><a href="{{ path('blog_index') }}">Retour</a></p>
+
+
+-------------------------------------
+
+dans IntroTwigController 
+
+modifier function add
+public function add() {
+        $posts = $this->session->get('posts');
+        $id = uniqid();
+        $posts[$id] = [
+            'title' => 'Un titre al�atoire'. rand(1,500), 
+            'text' => 'Un texte al�atoire'. rand(1,500),
+            'id'=> $id
+        ];
+
+        $this->session->set('posts', $posts );
+        return new RedirectResponse( $this->router->generate('blog_index'));
+    }
+
+dans index.html.twig 
+
+modifier ligne 8 id par post.id
+
+-------
+
+modifier function add 
+a la suite de 'id' => $id, ajouter : 
+'date' => new \DateTime()
+
+--------------
+dans post.html
+<p>{{ post.date | date('H:i:s') }}</p>
+
+cela ne marche pas car la post.date ne peut etre converti en string
+
+
+https://twig.symfony.com/doc/2.x/filters/index.html
+cliquer sur date 
+il propose une function qui va cr�er un format compatible
+
+---------------------------------------------------------------
+page 404 
+Dans template => nouveau dossier bundles => sous dossier TwigBundle => dossier exception => fichier error404.html.twig => <p>Page Not Found</p>
+
+https://symfony.com/doc/2.0/cookbook/controller/error_pages.html
+
+mettre symfony en production dans .env modifier la ligne 17 APP_ENV=dev par APP_ENV=prod
+
+/!\ si beug possibilit� que ca soit a cause du cache taper la ligne suivante dans /var/www/html => php bin/console cache:clear --env=dev --no-debug
+
+
+------ 
+faire un nouveau dossier Twig dans src + fichier AppExtension.php
+
+voir doc sympfony template twig 
+
+dans AppExtension.php
+
+<?php 
+
+namespace App\Twig; // App\ car d�finit => composer.json
+
+use Twig\Extension\AbstractExtension;
+
+class AppExtension extends AbstractExtension
+{
+    public function getFilters()
+    {
+        
+    }
+}
+
+
+----
+IntroTwigController.php ajouter � la ligne 52 dans la function add
+
+            'price' => 56300.25
+
+---- 
+post.html.twig
+
+ajout ligne 5
+ <p>{{ post.price | price }}</p>
+<p></p>
+<p>Env : {{ app.environment }} </p>
+{# <p>User : {{ app.user }} </p> #}
+<p>Request : {{ app.request }} </p>
+<p>Session is Started : {{ app.session.isStarted }} </p>
+<p>Debug : {{ app.debug }} </p>
+
+-------
+webpack 
+
+<https://symfony.com/doc/current/frontend/encore/installation.html
+
+Install :
+composer require symfony/webpack-encore-bundle
+
+cela install des lignes dans package .json 1 => 16
+
+yarn install --no-bin-links 
+ 
+=> webpack.config.js
+
+cr�e app =>assets => css/js
+
+----------------------
+dans package.json
+
+yarn run dev
+
+ne marche pas dans machine vagrant car il faut faire les chemins dans package.json
+ 
+copier le path du chemin qui se trouve dans node modules / @symfony / bin etc 
+
+et modifier les scripts ligne 9 par 
+ "scripts": {
+        "dev-server": "./node_modules/@symfony/webpack-encore/bin/encore.js dev-server",
+        "dev": "./node_modules/@symfony/webpack-encore/bin/encore.js dev",
+        "watch": "./node_modules/@symfony/webpack-encore/bin/encore.js dev --watch",
+        "build": "./node_modules/@symfony/webpack-encore/bin/encore.js production --progress"
+    }
+
+yarn run dev : tout est ok
+
+3 fichiers cr�e dans dans public / build
++ 2 autres
+--------------------------------------------
+  index.html.twig dans blog 
+
+placer le doctype : !
+si raccourni ne marche pas v�rifier en bas � droite si le langage est bien en html et non en html twig
+puis dans le link rel ajouter =>  <link rel="stylesheet" href="{{ asset('buid/app.css') }}">
+
+si on v�rifie dans l'inspecteur un / est rajout� devant le build
+
+et rajouter avant body le script 
+   <script src="{{ asset('build/app.js') }}"></script>
+
+le script ne marche pas car pas de console.log 
+il faut ins�rer le run time en amont du build/app.js
+    <script src="{{ asset('build/runtime.js') }}"></script>
+
+-------------------------------------------
+
+modifier les script  par 
+    {{ encore_entry_script_tags('app')}}
+
+----------------------------------------------
+
+Multi entr�e 
+
+dans Ecnore webpack config 
+rajouter ligne 16 
+.addStyleEntry('base', './assets/scss/base.scss')
+
+dans assets ajout de scss + fichier base.scss
+
+body {
+    background-color: red;
+}
+
+--------------------------------
+cd /var/www/html yarn run dev 
+
+https://symfony.com/doc/current/frontend/encore/css-preprocessors.html
+
+d�commenter ligne 57
+
+puis en mettant yarn run dev on voit que ca marche pas mettre ce que l'on 
+nous conseille :
+yarn add sass-loader@^7.0.1 node-sass --dev --no-bin-links
+
+yarn run dev => compiler 
+
+--------------------
+dans index.html.twig
+remplacer ligne 5 par     <link rel="stylesheet" href="{{ asset('build/app.css') }}">
+par         {{ encore_entry_link_tags('base') }}
+
+---------------------
+yarn run watch ??? 
+-------------------
+
+si multi entr�e copier coller 
+ligne 16 et changer prefix 
+exemple :     .addStyleEntry('post', './assets/scss/post.scss')
+
+dans post.html 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+        {{ encore_entry_link_tags('post') }}
+   
+</head>
+
+puis dans post.scss 
+body {
+    background-color: green;
+}
+
+suivi de yarn run dev 
+
+--------------------------------
+
+pour le js 
+ligne 29
+ .addEntry('postjs', './assets/js/post.js')
+
+puis dans assets => js => cr�er fichier post.js
+
+suivi de yarn run dev (car on est pas en mode watch)
+
+dans post.html.twig a la fin de body 
+
+  {{ encore_entry_script_tags('postjs')}}
+
+https://symfony.com/doc/current/frontend/encore/virtual-machine.html
+
+ligne 77 taper :
+Encore.configureWatchOptions(watchOptions => {
+    watchOptions.poll = 250; // check for changes every 250 milliseconds
+});
+
+suivi de yarn run watch
+
+----
+
+plugin : https://github.com/webpack-contrib/copy-webpack-plugin
+
+const CopyWebpackPlugin = require('copy-webpack-plugin');
+
+module.exports = {
+  plugins: [new CopyPlugin(patterns, options)],
+};
+
+yarn add copy-webpack-plugin --dev --no-bin-links
+
+----------------------
+
+			PARTIE BACK END 
+
+base de donn�es /!\ gros morceau 
+
+pas de sql classique => orm object relationship mapped
+
+3 meilleurs orm pour php =>   Doctrine / Proppel / Illuminate
+
+1) Installation de doctrine pack => composer require symfony/orm-pack
+
+ligne 27 du dossier .env => DATABASE_URL=mysql://root:online@2017@127.0.0.1:3306/projet
+
+bdd n'existe pas encore 
+
+installation doctrine maker => composer require doctrine maker 
+ajout de fonctionnalit� � la console => de pouvoir utiliser des makers/constructeurs/bin console  / cr�er des entity / bdd / mise a jour de bdd 
+
+si probleme de cache => var => cache => dev => supprimer twig 
+php bin/console cache:clear
+
+creation de bdd =>  php bin/console doctrine:database:create
+
+
+2) Entity => php bin/console make:entity Contact
+
+New property name => lastname 
+
+fiel type ? => string (par d�fault) oui
+
+field lenght 255 ok 
+
+field bool ? ok
+
+add another property ? /!\ ne pas taper entr�e si pas termin� firstname 
+...
+add another property ? description  // fiel type => ? => text / ok ok ok => SUCCES 
+
+---------------------------------------------
+
+dans le dossier src => Entity => Contact.php
+
+Fair une migration : php bin/console make:migration
+cela cr�e un dossier Migrations dans src avec un fichier Version 
+
+donner l'ordre de lire tout les fichiers migrations pour mettre a jour bdd 
+=> php bin/console doctrine:migrations:migrate
+Warning => Y 
+
+---------------------------------------------
+
+dans entity => contact.php
+
+si rajout de colonne sql 
+
+copier une ligne par exemple : 
+    /**
+     * @ORM\Column(type="string", length=255)
+     */
+    private $firstname;
+
+et coller puis modifier par tel 
+clique droit sur $tel et insert php getter et setter 
+
+a chaque modification faire pour maj : php bin/console doctrine:migrations:diff 
+puis pour modif dans bdd php bin/console doctrine:migrations:migrate y
+
+-------------------------------------------------
+
+Fixtures = permettent de rentrer un jeu de test dans base de donn�es 
+https://symfony.com/doc/current/bundles/DoctrineFixturesBundle/index.html
+
+cd /var/www/html
+=> 1 composer require --dev doctrine/doctrine-fixtures-bundle
+
+une fois install� nous avons dans le dossier src un dossier DataFixtures et dans ce dossier nous avons un fichier AppFixtures.php
+
+=> composer require --dev fzaninotto/faker
+
+---------------------------------------------
+dans fichier AppFixtures.php 
+
+cr�er function ligne 18 => 
+private function loadContact(ObjectManager $manager) {
+
+}
+
+supprimer le contenu de la function public load ligne 12->15
+
+et remplir avec  $this->loadContact($manager);
+
+rajouter le use Faker;
+et use App\Entity\Contact;
+
+dans la private function loadContact {
+$faker = Faker\Factory::create('fr_FR');
+
+
+la function loadContact devient 
+   private function loadContact(ObjectManager $manager)
+    {
+        $faker = Faker\Factory::create('fr_FR');
+
+        for( $i = 0; $i < 10; $i++) {
+            $contact = new Contact();
+            $contact->setLastName($faker->lastName);
+            $contact->setFirstName($faker->firstName);
+            $contact->setTel($faker->phoneNumber);
+            $contact->setDescription($faker->text);
+            $contact->setDescription($faker->text);
+            $manager->persist($contact);
+        }
+
+        $manager->flush();
+    }
+
+
+--------------------------------------------------
+
+terminal de commande : 
+php bin/console doctrine:fixtures:load
+-y
+
+---------------------------------------------
+
+lister / modifier / supprimer bdd 
+
+
+cd /var/www/html
+New controller 
+php bin/console make:controller Contact
+=> cr�ation d'un controller Contact dans src
+
+vider function index
+
+entit� => class qui g�re les champs que l'on va mettre dans une table
+
+
+function index =>
+
+ public function index(Contact<tory $repository) // ctrl alt i sur ContactRepository
+    {
+        $contacts = $repository->findAll();
+  return $this->render('contact/index.html.twig', ['contacts' => $contacts]);
+    }
+
+------------------------------------------
+dans template / contact => index.html 
+
+supprimer tout, puis mettre :
+
+<table>
+    <tr>
+        <th>Lastname</th>
+        <th>Firstname</th>
+        <th>Phone</th>
+        <th>Action</th>
+    </tr>
+    {% for contact in contacts %}
+    <tr>
+        <td>{{contact.lastname}}</td>
+        <td>{{contact.firstname}}</td>
+        <td>{{contact.tel}}</td>
+        <td><a href={{path ('contact_edit', {'id' : contact.id} ) }}> Modifier></a></td>
+        <td><a href={{path ('contact_delete', {'id' : contact.id} ) }}> Supprimer></a></td>
+    </tr>
+    {% endfor %}
+</table>
+
+---------------------------------------------
+dans contact controller
+
+rajouter les function edit et delete
+
+
+      /**
+     * @Route("/contact/edit/{id}", name="contact_edit")
+     */
+    public function edit() // ctrl alt i sur ContactRepository
+    {
+        return false;
+    }
+
+      /**
+     * @Route("/contact/delete/{id}", name="contact_delete")
+     */
+    public function delete() // ctrl alt i sur ContactRepository
+    {
+        return false;
+    }
+
+----------------------------------------
+
+delete 
+
+https://symfony.com/doc/current/doctrine.html#deleting-an-object
+
+ContactController.php
+dans la public function delete 
+
+ public function delete(Request $request, ObjectManager $manager, Contact $contact) // ctrl alt i sur ContactRepository
+    {
+        $manager->remove( $contact );
+        $manager->flush();
+
+        return $this->redirectToRoute('contact');
+    }
+
+ajout les use de Request / ObjectManager / Contact
+------------------------------------
+pour voir toutes les commandes 
+cd /var/www/html php bin/console
+
+php bin/console make:form
+
+composer require symfony/form
+
+
+php bin/console make:form Contact
+-----------
+contact controller
+
+ligne 23 rajout =>  
+ /**
+     * @Route("/contact/new", name="contact_add")
+     */
+ public function add(Request $request) {
+        $contact = new Contact();
+
+        $form = $this->createForm(ContactType::class, $contact);
+
+        $form->handleRequest( $request );
+
+        return $this->render(
+            'contact/add.html.twig',
+            [
+                'form' => $form->createView(),
+            ]
+        );    
+    }
+
+----------------------------------------
+
+index.html.twig. dans contact au d�but <div>
+    <p><a href="{{ path('contact_add') }}">Ajouter</a></p>
+</div>
+
+ajout de add.html.twig dans contact �galement
+
+<div>
+    {{ form_start(form) }}
+
+    <div>
+        {{ form_row(form.lastName) }}
+    </div>
+
+    <div>
+        {{ form_row(form.firstName) }}
+    </div>
+    
+    <div>
+        {{ form_row(form.tel) }}
+    </div>
+ 
+    <div>
+        {{ form_row(form.description) }}
+    </div>
+
+
+    {{ form_end(form) }}
+</div>
+
+-----------------
+
+ajouter bouton submit 
+donc aller dans ContactType 
+puis ligne 19 ajout 
+            ->add(
+                    'save', 
+                    SumbitType::class, 
+                    [
+                        'label' => 'Ajouter',
+                        'attr' => [
+                            'class' => 'button'
+                        ]
+                    ]    
+                );
+    }
+
+/!\ faire un use sur le submit
+ 
+-----------------------
+
+faire une v�rification quand le formulaire est valide 
+pour cela aller dans ContactController.php 
+ligne 28 ajout apres Request, ObjectManager $manager
+ligne 35 ajout
+if( $form->isSubmitted() && $form->isValid() ){
+	$manager->persist($contact);
+	$manager->flush();
+return $this->redirectToRoute('contact');
+        } 
+
+---------------------------------
+
+ATELIER LUNDI 29/07/2019
+BRYAN COPYRIGHT 
+ME DONNER 5� POUR LA PERSONNE QUI L'UTILISERA A PARTIR DES LIGNES CI DESSOUS
+
+editer 
+dans 
+contact Controller ligne 51 
+editer function edit 
+    /**
+     * @Route("/contact/edit/{id}", name="contact_edit")
+     */
+     public function edit(Contact $contact, Request $request, ObjectManager $manager) // ctrl alt i sur ContactRepository
+    {
+        $form = $this->createForm(ContactType::class, $contact);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $manager->persist($contact);
+            $manager->flush();
+            return $this->redirectToRoute('contact');
+        }
+
+        return $this->render(
+            'contact/add.html.twig',
+            [
+                'form' => $form->createView(),
+                'edit' => true
+            ]
+        );
+        return false;
+    }
+-------------------------------------
+
+add.html.twig
+<div>
+        {% if edit is defined %}
+         {{ form_row(form.save, {'label': 'Modifer'}) }}
+
+        {% else %}
+            {{ form_row(form.save) }}
+        {% endif %}
+    </div>
+       
+    <div>
+        {{ form_row(form.save) }}
+    </div>
+    
+--------------------------------
+ContactController
+dans la function delete apr�s le flush ligne 82
+
+        $this->addFlash('success', 'Le contact � bien �t� supprim�');
+
+-----------------------------------------
+index.html.twig => contact au d�but du fichier
+
+{% for message in app.flashes('success') %}
+
+    <div class="alert alert-success">
+        {{ message}}
+    </div>
+
+{% endfor %}
+
+--------------------------
+entity contact 
+
+symfony constraint 
+https://symfony.com/doc/current/reference/constraints/NotBlank.html
+
+installation d'un composer pour mettre en place les constraint
+cd /var/www/html composer require symfony/validator doctrine/annotations
+
+rajout du use � la mano 
+use Symfony\Component\Validator\Constraints as Assert;
+ 
+ligne 22 lastname        
+* @Assert\NotBlank(message="Cette valeur est obligatoire")
+idem pour firstname 
+pour tel notblank �galement + r�gex : 
+         * @Assert\Regex("/((\+)33|0)[1-9](\d{2}){4}$/", message="Saisir au format 0000000000")
+
+pour description rajout d'une taille minimum de caract�res 
+      * @Assert\Length(min=40, minMessage="Saisir au moins 40 caract�res")
+
+
+-------------------------------------------
+add.html.twig contact 
+
+ligne 2 form start remplacer par 
+ {{ form_start(form, {'attr': {'novalidate': 'novalidate'}} ) }}
+
+
+-------------------------------------------
+cd /var/www/html
+php bin/console make:entity
+ 
+nom de la classe : Activity
+
+property : name 
+
+faire entr�e pour tout les autres champs
+
+--------------------------
+dans Activity.php 
+rajout a name      * @Assert\NotBlank(message="Cette valeur est obligatoire")
+
+dans le use enlever le /not blank et remplac� par as Assert
+
+-----------
+
+php bin/console doctrine:migrations:diff
+
+g�n�re un fichier avec un num�ro
+
+php bin/console doctrine:migrations:migrate
+
+si l'on va dans phpmyadmin on retrouve bien notre table activity
+
+-----------------------------------
+
+AppFixtures.php 
+
+ligne14 dans public function load ajout de 
+
+$this->loadActivity($manager);
+
+a la suite de la function loadContact 
+ajout de la 
+private function loadActivity(ObjectManager $manager) {
+        $activities = [
+            "Artisanal",
+            "Agricole",
+            "Industrielle"
+        ];
+        
+        foreach($activities as $activityName) {
+            $activity = new Activity();
+            $activity->setName($activityName);
+            $manager->persist($activity);
+        }
+
+        $manager->flush();
+    }
+
+------------------------
+cd /var/www/html  php bin/console doctrine:fixtures:load
+
+les activit�s sont bien charg�es dans la table activity
+
+---------------
+relations 
+
+cd /var/www/html
+php bin/console make:entity
+
+create or update ? Contact
+
+Already exits 
+New property name ? 
+activity
+
+string ? 
+relation
+
+avec qui ? 
+Activity
+
+Relation type ? 
+ManyToOne
+
+to be null ? 
+
+taper entr�e jusqu'a la fin 
+
+-----------------------------
+dans entity contact regarder ce qu'il a rajouter au niveau des set get / des construct / remove et add
+pas de use c'est normal 
+
+exemple ligne 48
+------------------------------
+
+dans activity.php 
+pas de use il faut les rajouter 
+
+ctrl alt i sur app contact ligne 30 de contact.php et ligne 47 sur activity.php 
+
+cd /var/www/html 
+vu qu'il y a modification de l'entity il faut faire 
+php bin/console doctrine:migrations:diff
+php bin/console doctrine:migrations:migrate
+
+--------------------------------------
+
+https://symfony.com/doc/current/reference/forms/types/entity.html
+reprendre la propri�t� de l'objet contact $activity
+ligne 20 rajouter 
+            ->add('activity', EntityType::class)
++ ctrl alt i
+et ajouter a la suite les atributs, avec la propri�t� : 
+ 'class' => Activity::class (ctrl alt i sur Activity)
+
+-----------------------------------
+dans add.html.twig a la suite de description ligne 20 
+ajouter 
+   <div>
+        {{ form_row(form.activity) }}
+    </div>
+
+dans index.html.twig de contact 
+ajouter         <th>Activit�</th> avant action
+
+puis ligne 27 
+            <td>{{contact.activity}}</td>
+
+si on actualise la page localhost:8080/contact il y a une erreur 
+--------------------------------------------
+
+/!\ ne jamais faire de var dump a symfony sinon la machine plante
+
+du coup installation de dumper 
+composer require --dev symfony/var-dumper 
+
+a la place de contact activity ligne 27 on fait un dump exemple :
+
+ <td>{{ dump(contact.activity) }}</td>
+
+beug du coup rajouter 
+composer require --dev symfony/debug-bundle
+
+dans Contact type ligne 26 pour avoir bouton radio
+
+----------------------------------------
+manytomany
+
+creation d'une entity
+php bin/console make:entity 
+
+Softskill
+
+et plusieurs fois entr�e
+
+------------------
+php bin/console doctrine:migrations:diff
+
+php bin/console doctrine:migrations:migrate
+
+
+dans appFixtures 
+function load ajouter apr�s ligne 15
+        $this->loadSoftskill($manager);
+puis ligne 52
+
+private function loadSoftskill(ObjectManager $manager) {
+        $softskills = [
+            "R�actif",
+            "Organis�",
+            "S�rieux"
+        ];
+
+        foreach( $softskills as $softskillName) {
+            $softskill = new Softskill();
+            $softskill->setName($softskillName);
+            $manager->persist($softskill);
+        } 
+
+        $manager->flush();
+
+    }
+
+---------------------------------------
+
+php bin/console doctrine:fixtures:load
+
+maintenant on va modifier l'entit� contact pour faire la relation many to many entre contact et softskill
+
+
+php bin/console make:entity
+
+Contact 
+
+softskills
+
+relation
+
+Softskill
+
+ManyToMany
+
+Yes
+
+suivi d'un php bin/console doctrine:migrations:diff
+et 
+php bin/console doctrine:migrations:migrate
+-----------------------------------
+
+modifier formulaire
+
+dans Form => ContactType
+a la suite de add activity
+
+->add('softskills', EntityType::class,[
+                'class' => Softskill::class,
+                'label' => 'Cocher les diff�rentes qualit�s',
+                'choice_label' => 'name',
+                'multiple' => true,
+                'expanded' => true 
+            ])
+
+-----------------------------------
+changer le twig / contact => add.html.twig
+
+securit� :
+https://symfony.com/doc/current/security.html
+
+composer require symfony/security-bundle
+
+------------------------------------------------------
+si permission refus�e faire avec sudo 
+et si cela ne marche toujours pas red�marrer la machine
+et relancer le composer require symfony/security-bundle
+-------------------------------------------------------
+
+voir doc symfony 2a)
+php bin/console make:user
+tap� entr� plusieurs fois
+
+php bin/console doctrine:migrations:diff
+php bin/console doctrine:migrations:migrate
+ 
+cela fait une table user 
+
+
+voir doc symfony 2b)
+
+2c) encoder mot de passe 
+
+dans app -> config -> package -> security.yarl
+ 
+algorithm: bcrypt
+            cost: 12
+
+----------------------------
+appFixtures.php
+function public load ajout de
+        $this->loadUser($manager);
+
+et ajout de la function loadUser 
+
+private function loadUser($manager)
+    {
+        $user = new User();
+        $user->setEmail('1234@gmail.com');
+	
+(a)
+        $manager->persist($user);
+        $manager->flush();
+    }
+
+
+au dessus de la function load ligne 15
+
+/**
+     * @UserPasswordEncoderInterface
+     */
+
+    private $encoder;
+
+    public function __construct(UserPasswordEncoderInterface $encoder)
+    {
+        $this->encoder = $encoder;
+    }
+
+rajouter dans la public function LoadUser au niveau du point (a) 
+$user->setPassword($this->encoder->encodePassword($user, '1234'));
+$user->setRoles(['ROLE_ADMIN']);
+
+
+--------------------------------
+dans load activity 
+
+ctrl x sur le tableau des activit�s
+et le coller ligne 16 au debut de la classe 
+private const ACTIVITIES = [
+        "Artisanal",
+        "Agricole",
+        "Industrielle"
+    ];
+
+modifier ligne 74 $activities par self::ACTIVITIES
+et dans la function apr�s le setName 
+$this->addReference($activityName, $activity);
+
+faire pareil avec  SOFTSKILLS = [
+            "R�actif",
+            "Organis�",
+            "S�rieux"
+        ];
+
+ligne 85 => self::SOFTSKILLS
+puis apr�s setName
+$this->addReference($softskillName, $softskill);
+
+dans function load contact ligne 56 
+ajouter 
+ $contact->setActivity( $this->getReference( self::ACTIVITIES [ rand( 0, count (self::ACTIVITIES) -1 ) ] ) );
+            $contact->addSoftskill( $this->getReference( self::SOFTSKILLS [ rand( 0, count (self::SOFTSKILLS) -1 ) ] ) );
+
+apr�s le setDescription et avant le persist
+
+-----------------------
+
+lancer les fixtures
+
+php bin/console doctrine:fixtures:load
+
+---------------------
+
+cd /var/www/html
+
+php bin/console make:auth
+
+1
+
+Security 
+
+deux fois entr�e 
+
+cela cr�e 3 fichiers
+ dans src => security => SecurityAuthenticator 
+dans src => templates => security => login.html.twig
+dans src => Controller => SecurityController.php
+
+rajout de lignes
+dans config => packages => security.yaml 
+ligne 30   guard:
+                authenticators:
+                    - App\Security\SecurityAuthenticator
+
+dans contactcontroller
+/**
+ * @Route("/dashboard")
+ */
+
+----------------------
+dans SecurityAuthenticator 
+enlever le throw ligne 89 et remplacer par 
+return new RedirectResponse($this->urlGenerator->generate('contact'));
+
+------------------------
+
+composer require --dev symfony/profiler-pack
+
+------------------------
+dans config=>packages=>security.yaml
+
+d�commenter ligne 37 et remplacer admin par dashboard
+
+--
+dans template => contact => index.html
+
+ligne 9 ajout
+
+<p><a href="{{ path('app_logout') }}">D�connexion</a></p> 
+
+puis dans security.yaml 
+ligne 26   target: app_login
+
+---------------------------------------
+
+rajout de body dans templates => contact => index.html.twig 
+pour que le profiler pack fonctionne 
+
+et ajout de <th>comp�tences</th> avant action ligne 24
+
+apres ligne 37  <td>
+                {{ dump(contact.softskills)}} 
+            </td>
+
+softskills correspond au controller de contact
+
+quand var dump retourne array collection il faut penser � parcourir le tableau avec une boucle 
+
+ex   {% for softskill in contact.softskills %}
+                        {{ softskill.name }} <br />
+                {% endfor %} 
+
+---------------
+ajout d'un super admin
+
+dans appfixtures.php 
+entre ligne 52/53 copier coller le $user ligne 48 => 52 et coller avant le flush
+
+et le modifier, ce qui donne 
+$user = new User();
+        $user->setEmail('2345@gmail.com');
+        $user->setPassword($this->encoder->encodePassword($user, '2345'));
+        $user->setRoles(['ROLE_SUPER_ADMIN']);
+        $manager->persist($user);
+
+on charge les fixtures
+php bin/console doctrine:fixtures:load
+
+---------------------
+dans index.html.twig contact 
+pour autoriser seulement le super admin 
+
+  {% if is_granted('ROLE_SUPER_ADMIN') %}
+    <p>
+        <a href="{{ path('contact_add') }}">Ajouter</a>
+    </p>
+    {% endif %}
+
+--------
+dans security.yaml 
+
+rajouter le super admin a la ligne 37 ce qui donne
+        - { path: ^/dashboard, roles: [ROLE_SUPER_ADMIN, ROLE_ADMIN] }
+
+---------------
+dans controller contact 
+
+ligne 30 dans la route ajout ligne 31
+@Security + ctrl alt i dessus et choisir la deuxieme option 
+bundle/extra/bundle
+
+puis ajouter le is granted
+ce qui donne @Security("is_granted('ROLE_SUPER_ADMIN')", statusCode=403, message= "Acc�s interdit - Demander les droits � votre administrateur")
+
+puis ajout du use a la mano
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\isGranted;
+
+ne marche pas il faut ajouter 
+composer require symfony/expression-language 
+
+----------------
+
+envoie de mail avec symfony => swift mailer 
+
+https://symfony.com/doc/current/email.html
+
+composer require symfony/swiftmailer-bundle
+
+
+dans .env
+ligne 34 mailer_url=null
+devient 
+mailer_url=smtp://smtp.mailtrap.io:465?encryption=tls&username=c8225bcd8757af&password=da4e64b8abc3db&apauth_mode=login
+
+-------------
+dans controller contact public function add juste apr�s le flush ajouter 
+
+//Envoie un mail 
+$message = (new \Swift_Message("Ajout d'un nouveau contact")) 
+->setFrom("no-reply@test.fr")
+->setTo("bryan-p@live.fr")
+->setBody( 
+	$this->renderView (
+		'email/info.html.twig'
+	),
+	'text/html'
+);
+
+$mailer->send($message);
+return $this->redirectToRoute('contact');
+
+
+dans les arguments de la function public add ajout de , \Swift_Mailer $mailer
+
+-------------
+
+dans app => template => cr�e dossier email => ajout du fichier info.html.twig 
+
+!
+
+entre body ajouter 
+<h2>Ajout d'un contact</h2>
+<p>Un nouveau contact a �t� ajout�</p>
+
+---------------
+
+cliquer sur le logo en bas a gauche vert 
+aller dans les 10 derniere requetes (last 10)
+cliquer sur le 1er 302 
+et enfin aller sur la rubrique email 

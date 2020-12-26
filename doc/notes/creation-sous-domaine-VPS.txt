@@ -1,0 +1,49 @@
+- Etape 1: Créer le dossier via un FTP
+
+- Etape 2: Créer le sous domaine via le dashboard de OVH
+
+- Etape 3: Création de la BDD et du user avec tout les privilège
+
+En ssh:
+mysql 
+
+mysql> CREATE DATABASE;
+mysql> CREATE USER 'projetvinyle'@'localhost' IDENTIFIED BY 'lemotdepasse';
+mysql> grant all privileges on `nombasededonnees`.* to 'projetvinyle'@'localhost';
+mysql> flush privileges;
+
+- Etape 4: Création du sous-domaine en ssh 
+
+## on copie le fichier en le renomant dans sites-available 
+
+$ cp igal-ilmi.fr.conf nom_du_nouveau_fichier.fr.conf
+
+## ouvrir le fichier crée 
+
+$ nano nom_du_nouveau_fichier.fr.conf
+
+Le modifier avec ma configuration et supprimer les ligne du bas sur la certification SSL car on générera le bon certificat pour
+ce nom de domaine précisément
+
+
+## ajouter le site dans le fichier etc/hosts
+
+$ nano /etc/hosts
+
+## Activé le site avec --> a2ensite nomdusite.fr.conf (équivaut a créer un lien symbolique : ln -s original-file.txt linkname)
+On redémarre apache --> /etc/init.d/apache2 restart ou systemctl restart apache2
+
+## Vérifier que le fichier est bien présent dans le dossier sites-enabled
+
+## Généré le certificat SSL :
+$ certbot --apache -d nomdusite.fr
+
+/ ! \ Choix n°2 / ! \ 
+
+## Vérifier dans le fichier que le cerficat est bien présent
+
+## Libéré le port 443 du firewall :
+$ ufw allow https
+
+Redémarrer apache :
+8 9

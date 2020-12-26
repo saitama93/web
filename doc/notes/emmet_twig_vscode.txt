@@ -1,0 +1,12 @@
+Le paramétrage de VSCode :
+La seule chose à modifier dans le paramétrage, c'est la possibilité de bénéficier de Emmet au sein des fichiers Twig et des fichiers JS (pour qu'on puisse faire du JSX simplement) !
+
+ Pour ce faire, vous devez rajouter ce paramétrage (menu Fichiers > Préférences > Paramètres > Panneau de droite "Paramètres Utilisateur") :
+
+{
+    "tous vos autres paramètres: "...",
+    "emmet.includeLanguages": {
+        "twig": "html",
+    },
+    "emmet.triggerExpansionOnTab": true
+}

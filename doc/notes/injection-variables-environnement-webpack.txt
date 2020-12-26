@@ -1,0 +1,19 @@
+### EXEMPLE AVEC FORMATION REACT API SYMFONY ###
+
+Dans le .env ajouter la variable d'environnement
+
+###> URL de l'API 
+API_URL ="'http://localhost:8080/api/'"
+###> URL de l'API 
+
+Dans le fichier config.js
+
+export const API_URL = process.env.API_URL;
+
+### INSTALLATION Dotenv ###
+
+Permet de lire le fichier .env et de charger les infos dans le process.env
+yarn add dotenv --no-bin-links
+
+Tout au début du fichier webpack.config.js charger la config
+require("dotenv").config();

@@ -1,0 +1,7 @@
+###  INSTALLATION  ###
+
+https://github.com/stripe/stripe-php
+
+composer require stripe/stripe-php
+
+Script JS: <script src="https://js.stripe.com/v3/"></script>

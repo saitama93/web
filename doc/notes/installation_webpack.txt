@@ -1,0 +1,94 @@
+Installation de Webpack
+
+cd /var/www/html/
+
+yarn add --dev webpack --no-bin-links
+
+yarn add --dev webpack-cli --no-bin-links
+
+sudo rm -rf node_modules/
+
+yarn install --no-bin-links
+
+à la racine de "app" créer le fichier "webpack.config.js"
+
+
+webpack.config.js:
+const path = require('path');
+
+module.exports = {
+    entry: './assets/js/app.js', //Le/les point(s) d'entré sont toujours un fichier .js
+    output: {
+        path: path.resolve(__dirname, 'public/js'),
+        filename: 'script.js'
+    }
+};
+
+
+
+
+pacakge.json:
+
+{
+    "devDependencies": {
+
+        "webpack": "^4.34.0",
+        "webpack-cli": "^3.3.4"
+    },
+    "scripts": {
+        "build":"./node_module/webpack/bin/webpack.js --config webpack.config.js"
+    }
+}
+
+
+Créer un dossier "scss" dans "assets" 
+Créer un fichier "main.scss" dans "le dossier "scss"
+
+Faire un: 
+
+yarn add --dev sass-loader node-sass --no-bin-links
+
+yarn add --dev css-loader style-loader --no-bin-links
+
+yarn add --dev mini-css-extract-plugin no--bin-links
+
+
+REVENIR DANS LE FICHIER: webpack.config.js:
+
+const path = require('path');
+const MiniCSSExtractPlugin = require('mini-css-extract-plugin');
+const devMode = process.env.MODE_ENV !== 'production';
+
+module.exports = {
+    entry: './assets/js/app.js', //Le/les point(s) d'entré sont toujours un fichier .js
+    output: {
+        path: path.resolve(__dirname, 'public/js'),
+        filename: 'script.js'
+    },
+
+   modue{
+       rules:[{
+	   test: /\.s?[ac]ss$/,
+	   use: [
+	     MiniCSSExtractPlugin.loader,
+	     {loader: 'css-loader', options: {url : false, sourceMap : true}},
+	     {loader: 'sass-loader', options: {sourceMap: true}}
+	   ]
+	}]
+   },
+
+   devtool:'source-map',
+   plugins:[
+	new MiniCSSExtractPlugin{(
+	   filename: '../css/style.css'
+	})
+   ],
+
+    mode: devMode ? 'development' : ' production'
+};
+
+
+Au début du fichier app.js:
+
+require('../scss/main.scss');
+

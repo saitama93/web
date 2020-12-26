@@ -1,0 +1,757 @@
+﻿install symfo
+
+dans machine 
+$ cd /var/www/html
+$ composer create-project symfony/skeleton ./
+
+
+modifié vb memory si probleme
+decommenter 52 57 et 58
+2048 au lieu de 1024
+
+
+$ git init
+$ git add .
+$ git commit -m 'start project'
+$ git config --global user.email "yoaeraeru@aemaeraer.frzefz"
+refaire commit
+
+$ sudo nano /etc/apache2/sites-enabled/000-default.conf
+
+ajouter mot public dans DocumentRoot /var/www/html/
+
+ctrl x -> enregistrer
+ctrl o -> quitter
+
+redemarrer apache2
+toujours dans var www html
+
+$ sudo service apache2 restart
+
+
+##########################################
+                 ROUTES
+##########################################
+routage par commentaire dans controller
+
+$ cd /var/www/html/
+$ composer require annotations
+
+Créer fichier DefaultController dans dossier Controller
+
+
+CREER LES ROUTES
+$ composer require symfony/apache-pack
+(Verifier que htdoc et bon et que rewriter est installé)
+
+
+
+INSTALL SYMFONY MAKER BUNDLE 
+$ composer require symfony/maker-bundle --dev
+$ php bin/console make:controller DashboardController
+
+##########################################
+                  TWIG
+##########################################
+$ cd /var/www/html/
+$ composer require twig
+
+##########################################
+                 WEBPACK
+##########################################
+$ cd /var/www/html/
+$ composer require symfony/webpack-encore-bundle
+(vérifier si node.js et yarn est installé si ca marche pas)
+$yarn install --no-bin-links
+
+changé chemin dans package.json : 
+remplacer tout les 'encore' par : ./node_modules/@symfony/webpack-encore/bin/encore.js
+
+$yarn run dev
+
+Chemin CSS -> <link rel="stylesheet" href="{{ asset('build/app.css')}}"> 
+
+
+###############################################################
+Chemin Script -> 
+<script src="{{ asset('build/runtime.js')}}"></script>
+<script src="{{ asset('build/app.js')}}"></script>
+
+OU (au même endroit)
+
+{{ encore_entry_script_tags('app')}}
+(on trouve le add entry dans webpack.config.js)
+
+##########################################
+       WEBPACK CONFIG  ->  SASS
+##########################################
+
+Pour ajouter les styles : 
+Dans fichier webpack config en dessous de " Encore " et des setPublicPath on ajoute une entrée : 
+.addStyleEntry('base', './assets/scss')
+
+$ cd /var/www/html
+
+INSTALLER SASS LOADER :
+ajouter ligne dans webpackconfig : 
+.enableSassLoader() 
+ou décommenter ligne 57
+
+ET :
+
+$ yarn add sass-loader@^7.0.1 node-sass --dev --no-bin-links
+
+
+ COMPILER : 
+$ yarn run watch 
+
+on peux supprimer la ligne <link stylesheet> dans index.html.twig 
+remplacer par :
+{{ encore_entry_link_tags('base') }}
+
+##########################################
+            MULTI ENTRY
+##########################################
+
+ajouter un .addStyleEntry en changeant les noms exemple : 
+.addStyleEntry('post', './assets/scss/post.scss')
+-> compilé
+-> ajouter point d'entrée dans post.html.twig :
+{{ encore_entry_link_tags('post') }}
+
+
+
+=====> Meme chose pour le JS <======
+
+
+
+##########################################
+           ajout pluggin
+##########################################
+DANS WEBPACK CONFIG 
+
+
+const CopyWebpackPlugin = require('copy-webpack-plugin');
+
+
+    .addPlugin( new CopyWebpackPlugin([
+        { from: '.assets/static', to: 'static'}
+    ]))
+
+Créer dossier static 
+dossier img, font...
+
+$ yarn add --no-bin-links copy-webpack-plugin --dev
+
+##########################################
+             BASE DE DONNEES
+##########################################
+ORM => Mapping objet-relationnel
+
+orm list php :
+DOCTRINE 
+PROPEL
+ILUMINATE (ELOQUENT)
+
+Pour symfo -> Doctrine 
+
+##########################################
+        INSTALLTION DOCTRINE
+
+$ cd /var/www/html/
+$ composer require symfony/orm-pack
+
+Dans .env 
+ligne 27 changé identifiant bdd 
+DATABASE_URL=mysql://root:online@2017@127.0.0.1:3306/projet
+
+
+$ composer require doctrine maker
+
+
+##########################################
+CREATION BASE : 
+
+$php bin/console doctrine:database:create
+
+
+CREATION ENTITE : 
+(table)
+$ php bin/console make:entity contact
+
+donner le nom de la colonne 
+donner le type de colonne
+
+Genere le fichier migration UNIQUEMENT A LA PREMIERE migration
+SINON UTILISER $ php bin/console doctrine:migrations:diff :
+$ php bin/console make:migration  
+
+
+
+
+génére la base d'après le fichier migration :
+$ php bin/console doctrine:migrations:migrate
+
+
+SI besoin de rajouter une colonne : 
+Changé entity (dans dossier entity)
+
+
+Mettre a jour l'entité
+$ php bin/console doctrine:migrations:diff
+$ php bin/console doctrine:migrations:migrate
+
+##########################################
+                FIXTURE 
+        CREER DES DONNEES FICTIVE
+##########################################
+jeu de données fake pour les base de données
+dans dossier src -> dossier datafixture : 
+pour le créer :
+$ cd /var/www/html/
+$ composer require --dev doctrine/doctrine-fixtures-bundle
+
+INSTALLATION FAKER :
+
+$ composer require --dev fzaninotto/faker
+
+Dans dossier AppFixture : 
+ajout private function loadContact
+enlever contenu de la public function load
+et remplacer le contenu de load par : $this->loadContact($manager);
+
+ajout use Faker;
+use App\Entity\Contact (pour l'entité)
+
+ajout Variable Faker dans loadContact
+$faker = Faker\Factory::create('fr_FR');
+        for( $i = 0; $i < 10; $i++){ // DEFINIS DES VALEURS DE CONTACT A CHAQUE TOUR 
+            $contact = new Contact();
+            $contact->setLastname($faker->lastName);
+            $contact->setFirstname($faker->firstName);
+            $contact->setTel($faker->phoneNumber);
+            $contact->setDescription($faker->text);
+           $manager->persist($contact);
+        }
+        $manager->flush();
+
+LANCE LE PROCESSUS :
+$ php bin/console doctrine:fixture:load 
+ATTENTION: SUPPRIME LES DONNEES EXISTANTE
+
+##########################################
+         UTILISATION DES DONNEES
+##########################################
+Création d'un controller
+$cd /var/www/html
+$php bin/console make:controller Contact
+
+Symfo dispose de requete préfaite ex :
+findAll -> recupere toutes les données séparer d'une virgule 
+
+    public function index(ContactRepository $repository)
+    {
+        $contact = $repository->findAll();
+
+        (ajouter use repository)
+on inscrit ca dans la fonction du ContactController : 
+
+
+Envoyer a twig (dans la meme function): 
+ return $this->render('contact/index.html.twig', ['contacts' => $contacts ]);
+
+
+ LISTE DES CONTACTS DANS INDEX.HTML.TWIG :
+ <table> //NOM DES COLONNES
+    <tr>
+        <th>Lastname</th>
+        <th>Firstname</th>
+        <th>Phone</th>
+        <th>Action</th>
+    </tr>
+    //BOUCLE POUR RECUPERER LES CONTACTS
+{% for contact in contacts %} 
+    <tr>
+        <td>{{contact.lastname}}</td>
+        <td>{{contact.firstname}}</td>
+        <td>{{contact.tel}}</td>
+        <td><a href="{{ path('contact_edit', {id : contact.id} )}}">MODIFIER </a></td>
+        <td><a href="{{ path('contact_delete', {id : contact.id} )}}">SUPPRIMER </a></td>
+    </tr>
+{% endfor %}</table>
+
+
+
+ajouter function dans controller pour définir les liens d'ajout et de suppression des contacts.
+
+
+##########################################
+             ENTITY MANAGER
+         SUR LA FONCTION DELETE
+##########################################
+ContactController :
+Dans la function delete ajouter dépendance : 
+ public function delete(Request $request, ObjectManager $manager, Contact $contact)
+
+Ainsi que les use : 
+use Symfony\Component\HttpFoundation\Request;
+use Doctrine\Common\Persistence\ObjectManager;
+use App\Entity\Contact;
+
+
+le request sert a géré une variable d'url (l'id du contact)
+le manager c'est a géré (=virer) le contact
+
+
+Pour supprimer : dans la function delete : 
+ $manager->remove($contact);
+         $manager->flush(); //COMMIT-> sert a VALIDER une action
+        return $this->redirectToRoute('contact');
+
+
+##########################################
+        CREER UN NOUVEAU CONTACT
+##########################################
+
+symfony possède des formulaires préfait qui peuvent ce lier à nos entités
+il voit qu'on a un champ date, donc il créé un input de type date
+varchar : input type text
+text : textarea
+date : input type date
+...
+
+
+$cd /var/www/html/
+$php bin/console 
+//SERT A AVOIR LA LISTE DE TOUTES LES COMMANDES POSSIBLE
+
+$composer require symfony/form
+$php bin/console make:form Contact  
+(le contact c'est le nom du fichier qu'il va créer)
+le terminal pose une qustion : demande le nom de la class (ici Contact);
+
+
+ Il va créer un fichier dans src > Form > ContactType.php
+
+ Ajouter la function au controller :
+
+     /**
+     * @Route("/contact/new", name="contact_add")
+     */
+    public function add(Request $request) 
+    {
+         $contact = new Contact();  //instancie l'objet
+
+        $form = $this->createForm( ContactType::class, $contact); //créer le formulaire
+
+        $form->handleRequest($request); //manipule la requete (verifie le _POST)
+        
+        //Creation du template/twig
+        return $this->render(
+        'contact/add.html.twig',
+        [
+            'form' => $form->createView()
+        ]
+        );
+    }   
+
++ Ajout du use : use App\Form\ContactType;
+
+
+    //Le request va géré l'insertion 
+
+Ajouter dans template > Contact > index.twig.html
+<div>
+<p> <a href="{{path('contact_add')}}">Ajouter</a></p>
+</div>
+
+
+
+CREER NOUVEAU FICHIER add.html.twig (toujours dans template > contact)
+<creation du formulaire (voir fichier)>
+
+
+
+make:form ne met pas par défaut le bouton submit,
+il faut l'ajouter a la mano dans ContactType.php
+
+Dans $builder ajouter :
+            ->add('save', 
+            SubmitType::class,
+            [
+                'label' => 'Ajouter',
+                'attr' => [
+                    'class' => 'button'
+                ]
+            ]
+             )
+
+// save = name de l'input
++ le use : use Symfony\Component\Form\Extension\Core\Type\SubmitType;
+
+
+ON RETOURNE DANS LE CONTROLLER CONTACT :
+
+!!!ATENTION!!!
+TOUJOURS APRES LE handleRequest:
+
+        // FAIT TOUTES LES VERIFICATIONS
+        // SI ON A BIEN RECU LE FORMULAIRE et EST'CE QU'IL EST VALIDE
+        if( $form->isSubmitted() && $form->isValid() ){
+            // MET EN FIL D'ATTENTE CE QUON VEUX INJECTIER a utiliser juste pour insert et update
+            $manager->persist($contact);
+            $manager->flush();
+                   // Redirection sur la liste après execution
+            return $this->redirectToRoute('contact');
+        }
+
+
+++ ajouter dépendance a la function :  ObjectManager $manager
+
+
+##########################################
+                MODIFIER (edit)
+##########################################
+
+Même fonction de add -> sauf New contact 
+
+ajout du if + bouton modifier au lieu d'ajouter sur le meme formulaire (dans add.twig)
+
+##########################################
+Creer avertissement que la ligne a bien été supprimer
+
+dans function delete avant le return : 
+        $this->addFlash('success', "le contact est dead");
+
+
+AJOUt dan index.twig (dossier contact) : 
+
+{% for message in app.flashes('success') %}
+    <div class="alert alert-success">
+    {{message}}
+{% endfor %}
+
+
+
+##########################################
+  Contrainte et securité des entités
+##########################################
+
+INSTALL SYMFONY VALIDATOR : 
+
+$ cd /var/www/html/
+$ composer require symfony/validator doctrine/annotations
+
+symfony contraints -> pour limiter les saisies dans les bases de données exemple :
+not null
+null
+date
+nombre positif...
+
+
+Not blank dans contact.php sur lastname : 
+
+use Symfony\Component\Validator\Constraints as Assert;
+
+dans les commentaires : (en dessous de @ORM\Column(type="string", length=255)) :
+@Assert\NotBlank
+
+possibilité d'ajouter des messages d'erreurs : 
+(message="Ce champ est obligatoire")
+
+
+Enlever le require HTML pour que les messages d'erreur de symfo s'affiche :
+dans add.html.twig :
+{{ form_start(form, {'attr': {'novalidate':'novalidate'}}) }} 
+
+
+
+##########################################
+        Ajout d'une table (activité)
+##########################################
+
+$ php bin/console make:entity
+> Activity (nom table)
+> name (nom colonne)
+> string
+> 255
+> no
+
+$ php bin/console doctrine:migrations:diff
+$ php bin/console doctrine:migrations:migrate
+
+
+Création function dans AppFixtures pour ajouter des names
+$ php bin/console doctrine:fixtures:load
+
+
+
+
+##########################################
+        RELATION DES TABLES
+##########################################
+ $ cd /var/www/html
+ $ php bin/console make:entity
+> Contact 
+demande si on veux ajouter un nouveau champ 
+> activity (au singulier car many to one)
+Field Type :
+>relation
+
+>Activity
+>ManyToOne
+>yes (on ne conait pas l'activité de chacun)
+>entré
+>entré
+>entré
+ 
+
+Verifier les use (use de contact dans Activity.php et de activity dans Contact.php((sur les commentaire du private)))
+
+$ php bin/console doctrine:migrations:diff
+$ php bin/console doctrine:migrations:migrate
+
+
+
+
+MODIFIER LE FORMULAIRE :
+
+make:form ne propose pas les updates
+
+dans form/ContactType.php
+
+Type de champ : EntityType
+(parce que relation entre deux tables)
+
+
+ajout 
+            ->add('activity', EntityType::class, [
+                'class' => Activity::class,
+                'label' => 'Choisir une activité',
+                'choice_label' => 'name'
+            ])
++use de entityType
+choice_label : nom de la colonne qui contient les infos que l'on veux afficher (activité>name)
+
+
+
+((Pour changé le select en bouton radio (parce que onetomany donc pas de checkbox multichoix)
+'expanded' => true,
+'multiple' => false,
+
+pour cocher plusieurs case changé multiple en true ))
+
+
+
+>> un select est crée dans le formulaire add.twig 
+>> Ils sont chargé grace au form.end 
+>> Pour remettre au bon endroit :
+<div>
+    {{ form_row(form.activity) }}
+</div>
+
+Ajout dans tableau contact/index.twig :
+<td>{{contact.activity}}</td>
+
+ERREUR : NE PEUT ETRE CONVERTI EN STRING
+
+>>>>>>>>>>>>
+!!NE PAS FAIRE DE VAR_DUMP CA FAIS PLANTER LA MACHINE!!
+DONc :::
+
+
+INSTALLATION DE VAR_DUMPER ( ou the_dump )
+$ cd /var/www/html/
+$ composer require --dev symfony/var-dumper
+
+$ composer require --dev symfony/debug-bundle
+
+
+<td>{{dump(contact.activity)}}</td>
+
+Retourne un objet (Activity) avec des propriétés
+
+Si l'objet qu'on veux est null : faire un if pour verifie
+                    {% if contact.activity.name is defined %}
+                        oui
+                    {% else %}
+                        non
+                    {% endif %}
+
+et ensuite pour recuperer la valeur: 
+                    {% if contact.activity.name is defined %}
+                        {{ contact.activity.getName()}}
+                    {% else %}
+                        -
+                    {% endif %}
+
+
+##########################################
+                 ManyToMany
+##########################################
+Création nouvel table : Softskill
+colonne : name (string 255 nullable)
+
+Création de fixtures
+
+Relation : 
+$ php bin/console make:entity 
+$ Contact
+$ softskills (au pluriels car plusieurs skill pour un seul contact)
+$ relation 
+$ Softskill 
+$ ManyToMany
+$ yes 
+$ contacts (nom du champ dans Softskill au pluriel car plusieur skill pour un contact)
+
+
+
+Modifier le formulaire :
+ajoute un add dans $builder (ContactType.php)
+
+
+##########################################
+                 SECURITY
+##########################################
+
+$ cd /var/www/html
+$ composer require symfony/security-bundle
+$ php bin/console make:user
+> repondre au question
+
+$ php bin/console doctrine:migrations:diff 
+$ php bin/console doctrine:migrations:migrate
+
+dans config/package/security.yaml 
+
+changer algorithm: bcrypt
+            cost: 12
+
+
+#########################
+        FIXTURE :
+#########################
+
+$this->loadUser($manager);
+
+
+  /**
+     * @UserPasswordEncoderInterface
+     */
+
+    private $encoder;
+
+    public function __construct(UserPasswordEncoderInterface $encoder)
+    {
+        $this->encoder = $encoder;
+
+    }
+
+
+ private function loadUser (ObjectManager $manager)
+    {
+        $user = new User();
+        $user->setEmail('1234@gmail.com');
+        $user->setPassword($this->encoder->encodePassword($user, '1234'));
+        $user->setRoles(['ROLE_ADMIN']);
+        $manager->persist($user);
+        $manager->flush();
+    }
+
+
+use :
+use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
+use App\Entity\User as User;
+
+#################################
+CHANGEMENT FIXTURE
+#################################
+ajout au hasard de softskill et activity aux contact :
+
+AJOUT DEBUT DE FICHIER 
+
+    private const ACTIVITIES = [
+        "Artisanale",
+        "Agricole",
+        "Industrielle"
+    ];
+
+    private const SOFTSKILLS = [
+        "Réactif",
+        "Organisé",
+        "Sérieux"
+    ];
+
+
+CHANGEMENT FUNCTION LOAD
+
+    private function loadActivity(ObjectManager $manager)
+    {
+
+        foreach (self::ACTIVITIES as $activityName) {
+            $activity = new Activity();
+            $activity->setName($activityName);
+            $this->addReference($activityName, $activity);
+            $manager->persist($activity);
+        }
+        $manager->flush();
+    }
+
+    private function loadSoftskill(ObjectManager $manager)
+    {
+
+        foreach (self::SOFTSKILLS as $softskillName) {
+            $softskill = new Softskill();
+            $softskill->setName($softskillName);
+            $this->addReference($softskillName, $softskill);
+            $manager->persist($softskill);
+        }
+        $manager->flush();
+    }
+
+    ET AJOUT DANS FONCTION LOAD CONTACT : 
+    (parcour le tableau referencce, choisis un id au hasard et lie les id a un contact)
+            
+            $contact->setActivity( $this->getReference( self::ACTIVITIES[ rand ( 0, count
+            (self::ACTIVITIES) -1 ) ] ) );
+            $contact->addSoftskill( $this->getReference( self::SOFTSKILLS[ rand ( 0, count
+            (self::SOFTSKILLS) -1 ) ] ) );
+
+
+$ php bin/console doctrine:fixture:load
+
+
+#############################################
+               SECURITY LOGIN
+#############################################
+
+$ php bin/console make:auth
+$ 1
+$ Security 
+$ |->
+$ |->
+
+
+Dans securityController, 
+enlever throw new /exception et remplacer par la route souhaiter : 
+ return new RedirectResponse($this->urlGenerator->generate('contact'));
+
+
+####################################################
+ Install profiler : 
+ $ composer require --dev symfony/profiler-pack
+ ##################################################
+
+
+Dans security.yaml, decommenter ligne    (dashboard = route créée avant la class dans ContactController)
+ access_control:
+         - { path: ^/dashboard, roles: ROLE_ADMIN }
+
+
+ Por changer la route de déconnexion : dans security.yaml
+ decommenter la ligne TARGET et remplacer la route 
+  logout:
+                path: app_logout
+                # where to redirect after logout
+                 target: app_login
+

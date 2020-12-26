@@ -1,0 +1,20 @@
+$ CRTL + R
+- Dernier commande contenant le mot saisi
+
+Ex: CRTL + R avec status
+
+Sorti: "git status"
+
+
+$ CRTL + A && CRTL + Ex
+- Permet de se déplacer du début à la fin sur une longue ligne de commande
+
+
+$ Echap + D 
+- Efface le mot à droite du curser
+
+$ CTRL + W 
+- Efface le mot à gauche du curser
+
+$ CTRL + X + CRLT + E
+- Permet d'éditer ma ligne de commande dans un éditeur de texte
